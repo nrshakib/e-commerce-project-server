@@ -1,8 +1,8 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from store.models import Category, Product
-from store.serializer import CategorySerializer, ProductSerializer
+from .models import Category, Product
+from .serializer import CategorySerializer, ProductSerializer
 
 
 @api_view(['get'])
