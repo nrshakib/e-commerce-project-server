@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from .models import Cart, CartItem, Category, Product
-from .serializer import CartSerializer, CategorySerializer, ProductSerializer
+from .serializer import CartItemSerializer, CartSerializer, CategorySerializer, ProductSerializer
 
 
 @api_view(['get'])
@@ -32,7 +32,13 @@ def category_list(request):
 def get_cart(request):
     cart, created = Cart.objects.get_or_create(user = None)
     serializer = CartSerializer(cart)
-    return Response(serializer.data)
+    return Response(
+        {
+            "message": "Cart retrieved successfully",
+            "cart": serializer.data
+        },
+        status=status.HTTP_200_OK
+    )
 
 @api_view(['post'])
 def add_to_cart(request):
@@ -51,3 +57,25 @@ def remove_from_cart(request):
     item_id = request.data.get('item_id')
     CartItem.objects.filter(id = item_id).delete()
     return Response({'message':'Items removed from cart'})
+
+@api_view(['post'])
+def update_cart_quantity(request):
+    item_id = request.data.get("item_id")
+    quantity = request.data.get("quantity")
+
+    if not item_id or quantity is None:
+        return Response({'error':'ItemId and Quantity is required'}, status= status.HTTP_400_BAD_REQUEST)
+
+    try:
+        item = CartItem.objects.get(id=item_id)
+        if int(quantity)< 1:
+            item.delete()
+            return Response({'error':'Quantity must be atleast 1'}, status= status.status.HTTP_400_BAD_REQUEST)
+
+        item.quantity = quantity
+        item.save()
+        serializer = CartItemSerializer(item)
+        return Response(serializer.data)
+    
+    except CartItem.DoesNotExist:
+        return Response({'error':'Cart not found'}, status= status.status.HTTP_400_BAD_REQUEST)
